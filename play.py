@@ -75,45 +75,24 @@ class Pygomoku:
         return False
 
     def show_win_popup(self):
-        """ 胜利者弹框 """
+        """ 胜利提示 """
 
-        popup_width = 300
-        popup_height = 150
+        popup_width = self.cell_size * 4
+        popup_height = self.cell_size
         popup = pygame.Surface((popup_width, popup_height))
-        popup.fill((200, 200, 200))  # 灰色背景
+        popup.fill((230, 189, 144))
 
         # 使用默认字体渲染英文
-        font = pygame.font.SysFont(None, 36)
+        font = pygame.font.SysFont(None, 20)
         current_player = "black" if self.current_player == "黑" else "white"
         text = font.render(f"Player {current_player} Wins!", True, (0, 0, 0))
-        text_rect = text.get_rect(center=(popup_width // 2, 50))
-
-        # 确认按钮
-        btn_rect = pygame.Rect(100, 100, 100, 40)
-        pygame.draw.rect(popup, (0, 200, 0), btn_rect)  # 绿色按钮
-        btn_font = pygame.font.SysFont(None, 28)
-        btn_text = btn_font.render("OK", True, (255, 255, 255))
-        btn_text_rect = btn_text.get_rect(center=btn_rect.center)
+        text_rect = text.get_rect(center=(popup_width // 2, popup_height / 2))
 
         # 组合元素
         popup.blit(text, text_rect)
-        popup.blit(btn_text, btn_text_rect)
-
-        # 显示弹窗
-        screen_rect = self.screen.get_rect()
-        popup_rect = popup.get_rect(center=screen_rect.center)
-        self.screen.blit(popup, popup_rect)
+        x = (self.board_size + 1) * self.cell_size / 2 - (popup_width / 2)
+        self.screen.blit(popup, (x, 0))
         pygame.display.flip()
-
-        # 事件处理
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    # 转换鼠标坐标到弹窗局部坐标
-                    mouse_pos = (event.pos[0] - popup_rect.x,
-                                 event.pos[1] - popup_rect.y)
-                    if btn_rect.collidepoint(mouse_pos):
-                        return
 
     def pay(self, x: int, y: int):
         """ 落子, 并返回是否棋局结束了, false: 棋局结束了 """
@@ -130,6 +109,7 @@ class Pygomoku:
                 pygame.draw.circle(self.screen, self.WHITE, center, self.cell_size // 2 - 2)
 
             if self.check_win(x, y):
+                self.winner = self.current_player
                 self.show_win_popup()
 
             # 换对手下
@@ -145,6 +125,8 @@ class Pygomoku:
         running = True
         while running:
             for event in pygame.event.get():
+                if self.winner:
+                    continue
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
