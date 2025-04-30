@@ -23,6 +23,8 @@ class Pygomoku:
         self.current_player = "黑"
         # 最终赢家
         self.winner = None
+        # 下棋次数
+        self.times = 0
 
     def draw_board(self):
         """ 绘制棋盘 """
@@ -117,7 +119,8 @@ class Pygomoku:
         """ 落子, 并返回是否棋局结束了, false: 棋局结束了 """
 
         if 0 <= x < self.board_size and 0 <= y < self.board_size and self.board[x][y] == "空":
-            self.board[x][y] = self.current_player
+            self.times += 1
+            self.board[x][y] = f"{self.current_player}{self.times:03d}"
             center = ((x + 1) * self.cell_size, (15 - y) * self.cell_size)
 
             # 绘制棋子
