@@ -11,7 +11,7 @@ class Pygomoku:
         # 设置棋盘大小
         self.board_size = 15
         # 棋盘
-        self.board: list[list[str]] = [[u"　  " for _ in range(self.board_size)] for _ in range(self.board_size)]
+        self.board: list[list[str]] = [["空" for _ in range(self.board_size)] for _ in range(self.board_size)]
         # 设置棋格大小
         self.cell_size = 40
         # 创建五子棋游戏界面
@@ -33,8 +33,6 @@ class Pygomoku:
 
     def check_win(self, row: int, col: int):
         """ 判断是否有五子连珠 """
-        print(f"[check_win] {row=};{col=}")
-        print(f"{self.board=}")
 
         data_left, data_right, data_up, data_down = "", "", "", ""
         for i in range(9):
@@ -60,13 +58,13 @@ class Pygomoku:
             count = 1
             # 向一个方向搜索
             nx, ny = row + dx, col + dy
-            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.board[nx][ny] == self.board[row][col]:
+            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.board[nx][ny][0] == self.board[row][col][0]:
                 count += 1
                 nx += dx
                 ny += dy
             # 向相反方向搜索
             nx, ny = row - dx, col - dy
-            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.board[nx][ny] == self.board[row][col]:
+            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.board[nx][ny][0] == self.board[row][col][0]:
                 count += 1
                 nx -= dx
                 ny -= dy
@@ -91,16 +89,11 @@ class Pygomoku:
                     # 坐标修正
                     x_pos = x_pos - 1  # noqa
                     y_pos = y_pos - 3  # noqa
-                    print(f'{x_pos=};{y_pos=}')
-                    i = x = round(x_pos / self.cell_size) - 1
-                    j = y = 15 - round(y_pos / self.cell_size)
-                    print(f'{x=};{y=}')
-                    if 0 <= i < self.board_size and 0 <= j < self.board_size and self.board[x][y] == u"　  ":
-                        print(f"{i=};{j=};{self.current_player=};{self.board[i][j]}")
+                    x = round(x_pos / self.cell_size) - 1
+                    y = 15 - round(y_pos / self.cell_size)
+                    if 0 <= x < self.board_size and 0 <= y < self.board_size and self.board[x][y] == "空":
                         self.board[x][y] = self.current_player
-
-                        center = ((i + 1) * self.cell_size, (15 - j) * self.cell_size)
-                        print(f"{center=}")
+                        center = ((x + 1) * self.cell_size, (15 - y) * self.cell_size)
 
                         # 绘制棋子
                         if "黑" in self.board[x][y]:
@@ -108,7 +101,6 @@ class Pygomoku:
                         elif "白" in self.board[x][y]:
                             pygame.draw.circle(self.screen, self.WHITE, center, self.cell_size // 2 - 2)
 
-                        # print(1, f'{i=};{j=}; ')  # todo delete
                         if self.check_win(x, y):
                             print(f"玩家 {self.current_player} 获胜！")
                             running = False
