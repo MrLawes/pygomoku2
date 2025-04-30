@@ -64,7 +64,7 @@ class Pygomoku:
                 ny += dy
             # 向相反方向搜索
             nx, ny = row - dx, col - dy
-            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.board[nx][ny][0] == self.board[row][col][0]:
+            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.board[nx][ny][0] == self.board[row][col][0]:  # noqa
                 count += 1
                 nx -= dx
                 ny -= dy
@@ -72,7 +72,67 @@ class Pygomoku:
                 return True
         return False
 
-    def play(self):
+    def show_win_popup(self):
+        """ 胜利者弹框 """
+
+        popup_width = 300
+        popup_height = 150
+        popup = pygame.Surface((popup_width, popup_height))
+        popup.fill((200, 200, 200))  # 灰色背景
+
+        # 使用默认字体渲染英文
+        font = pygame.font.SysFont(None, 36)
+        current_player = "black" if self.current_player == "黑" else "white"
+        text = font.render(f"Player {current_player} Wins!", True, (0, 0, 0))
+        text_rect = text.get_rect(center=(popup_width // 2, 50))
+
+        # 确认按钮
+        btn_rect = pygame.Rect(100, 100, 100, 40)
+        pygame.draw.rect(popup, (0, 200, 0), btn_rect)  # 绿色按钮
+        btn_font = pygame.font.SysFont(None, 28)
+        btn_text = btn_font.render("OK", True, (255, 255, 255))
+        btn_text_rect = btn_text.get_rect(center=btn_rect.center)
+
+        # 组合元素
+        popup.blit(text, text_rect)
+        popup.blit(btn_text, btn_text_rect)
+
+        # 显示弹窗
+        screen_rect = self.screen.get_rect()
+        popup_rect = popup.get_rect(center=screen_rect.center)
+        self.screen.blit(popup, popup_rect)
+        pygame.display.flip()
+
+        # 事件处理
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    # 转换鼠标坐标到弹窗局部坐标
+                    mouse_pos = (event.pos[0] - popup_rect.x,
+                                 event.pos[1] - popup_rect.y)
+                    if btn_rect.collidepoint(mouse_pos):
+                        return
+
+    def pay(self, x: int, y: int):
+        """ 落子, 并返回是否棋局结束了, false: 棋局结束了 """
+
+        if 0 <= x < self.board_size and 0 <= y < self.board_size and self.board[x][y] == "空":
+            self.board[x][y] = self.current_player
+            center = ((x + 1) * self.cell_size, (15 - y) * self.cell_size)
+
+            # 绘制棋子
+            if "黑" in self.board[x][y]:
+                pygame.draw.circle(self.screen, self.BLACK, center, self.cell_size // 2 - 2)
+            elif "白" in self.board[x][y]:
+                pygame.draw.circle(self.screen, self.WHITE, center, self.cell_size // 2 - 2)
+
+            if self.check_win(x, y):
+                self.show_win_popup()
+
+            # 换对手下
+            self.current_player = "白" if self.current_player == "黑" else "黑"
+
+    def main(self):
         # 初始化 pygame
         pygame.init()
         # 绘制棋盘
@@ -91,21 +151,7 @@ class Pygomoku:
                     y_pos = y_pos - 3  # noqa
                     x = round(x_pos / self.cell_size) - 1
                     y = 15 - round(y_pos / self.cell_size)
-                    if 0 <= x < self.board_size and 0 <= y < self.board_size and self.board[x][y] == "空":
-                        self.board[x][y] = self.current_player
-                        center = ((x + 1) * self.cell_size, (15 - y) * self.cell_size)
-
-                        # 绘制棋子
-                        if "黑" in self.board[x][y]:
-                            pygame.draw.circle(self.screen, self.BLACK, center, self.cell_size // 2 - 2)
-                        elif "白" in self.board[x][y]:
-                            pygame.draw.circle(self.screen, self.WHITE, center, self.cell_size // 2 - 2)
-
-                        if self.check_win(x, y):
-                            print(f"玩家 {self.current_player} 获胜！")
-                            running = False
-                        # 换对手下
-                        self.current_player = "白" if self.current_player == "黑" else "黑"
+                    self.pay(x, y)
 
             pygame.display.flip()
 
@@ -115,4 +161,4 @@ class Pygomoku:
 
 if __name__ == "__main__":
     gomoku = Pygomoku()
-    gomoku.play()
+    gomoku.main()
