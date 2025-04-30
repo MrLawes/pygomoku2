@@ -108,7 +108,8 @@ class Pygomoku:
                     print(f'{x_pos=};{y_pos=}')
                     i = round(x_pos / self.cell_size) - 1
                     j = round(y_pos / self.cell_size) - 1
-                    if 0 <= i < self.board_size and 0 <= j < self.board_size and self.board[i][j] == u"　  ":
+                    if 0 <= i < self.board_size and 0 <= j < self.board_size and self.board[j][i] == u"　  ":
+                        print(f"{i=};{j=};{self.current_player=};{self.board[i][j]}")
                         self.board[j][i] = self.current_player
 
                         # 绘制棋子
