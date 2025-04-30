@@ -26,12 +26,28 @@ class Pygomoku:
         # 下棋次数
         self.times = 0
 
+        # 绘制重启按钮
+        self.restart_btn = pygame.Rect(
+            (self.board_size - 3) * self.cell_size,  # X坐标
+            10,  # Y坐标
+            self.cell_size * 2.5,  # 宽度
+            self.cell_size // 1.5  # 高度
+        )
+
     def draw_board(self):
         """ 绘制棋盘 """
+
+        pygame.init()
         self.screen.fill((230, 189, 144))  # 棋盘颜色
         for i in range(self.board_size):
             pygame.draw.line(self.screen, self.BLACK, ((i + 1) * self.cell_size, self.cell_size), ((i + 1) * self.cell_size, self.board_size * self.cell_size))
             pygame.draw.line(self.screen, self.BLACK, (self.cell_size, (i + 1) * self.cell_size), (self.board_size * self.cell_size, (i + 1) * self.cell_size))
+
+        pygame.draw.rect(self.screen, (34, 139, 34), self.restart_btn)  # 绿色按钮
+        font = pygame.font.SysFont(None, 24)
+        text = font.render("Restart", True, self.WHITE)
+        text_rect = text.get_rect(center=self.restart_btn.center)
+        self.screen.blit(text, text_rect)
 
     def check_win(self, row: int, col: int):
         """ 判断是否有五子连珠 """
@@ -115,9 +131,15 @@ class Pygomoku:
             # 换对手下
             self.current_player = "白" if self.current_player == "黑" else "黑"
 
+    def reset_game(self):
+        self.board = [["空" for _ in range(self.board_size)] for _ in range(self.board_size)]
+        self.current_player = "黑"
+        self.winner = None
+        self.times = 0
+        self.draw_board()
+
     def main(self):
-        # 初始化 pygame
-        pygame.init()
+
         # 绘制棋盘
         self.draw_board()
 
@@ -125,8 +147,6 @@ class Pygomoku:
         running = True
         while running:
             for event in pygame.event.get():
-                if self.winner:
-                    continue
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -136,7 +156,13 @@ class Pygomoku:
                     y_pos = y_pos - 3  # noqa
                     x = round(x_pos / self.cell_size) - 1
                     y = 15 - round(y_pos / self.cell_size)
-                    self.pay(x, y)
+
+                    if self.restart_btn.collidepoint(event.pos):
+                        self.reset_game()
+                        continue
+
+                    if not self.winner:
+                        self.pay(x, y)
 
             pygame.display.flip()
 
