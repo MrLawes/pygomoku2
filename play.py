@@ -6,12 +6,11 @@ import pygame
 class Pygomoku:
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
+    RED = (255, 0, 0)
 
     def __init__(self):
         # 设置棋盘大小
         self.board_size = 15
-        # 棋盘
-        self.board: list[list[str]] = [["空" for _ in range(self.board_size)] for _ in range(self.board_size)]
         # 设置棋格大小
         self.cell_size = 40
         # 创建五子棋游戏界面
@@ -19,12 +18,6 @@ class Pygomoku:
         self.screen = pygame.display.set_mode((size, size))
         pygame.display.set_caption("五子棋")
         pygame.display.flip()
-        # 当前玩家: 黑
-        self.current_player = "黑"
-        # 最终赢家
-        self.winner = None
-        # 下棋次数
-        self.times = 0
 
         # 绘制重启按钮
         self.restart_btn = pygame.Rect(
@@ -33,6 +26,9 @@ class Pygomoku:
             self.cell_size * 2.5,  # 宽度
             self.cell_size // 1.5  # 高度
         )
+
+        # 重置游戏数据
+        self.reset_game()
 
     def draw_board(self):
         """ 绘制棋盘 """
@@ -57,32 +53,32 @@ class Pygomoku:
 
             # 收集左边的棋子
             if 0 <= col - i < self.board_size:
-                data_left += self.board[row][col - i]
+                data_left += self.data["board"][row][col - i]
 
             # 收集右边的棋子
             if 0 <= col + i < self.board_size:
-                data_right += self.board[row][col + i]
+                data_right += self.data["board"][row][col + i]
 
             # 收集上边的棋子
             if 0 <= row - i < self.board_size:
-                data_up += self.board[row][col]
+                data_up += self.data["board"][row][col]
 
             # 收集下边的棋子
             if 0 <= row + i < self.board_size:
-                data_down += self.board[row][col]
+                data_down += self.data["board"][row][col]
 
         directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
         for dx, dy in directions:
             count = 1
             # 向一个方向搜索
             nx, ny = row + dx, col + dy
-            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.board[nx][ny][0] == self.board[row][col][0]:
+            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.data["board"][nx][ny][0] == self.data["board"][row][col][0]:  # noqa
                 count += 1
                 nx += dx
                 ny += dy
             # 向相反方向搜索
             nx, ny = row - dx, col - dy
-            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.board[nx][ny][0] == self.board[row][col][0]:  # noqa
+            while 0 <= nx < self.board_size and 0 <= ny < self.board_size and self.data["board"][nx][ny][0] == self.data["board"][row][col][0]:  # noqa
                 count += 1
                 nx -= dx
                 ny -= dy
@@ -100,8 +96,8 @@ class Pygomoku:
 
         # 使用默认字体渲染英文
         font = pygame.font.SysFont(None, 20)
-        current_player = "black" if self.current_player == "黑" else "white"
-        text = font.render(f"Player {current_player} Wins!", True, (0, 0, 0))
+        current_player = "black" if self.data["current_player"] == "黑" else "white"
+        text = font.render(f"Player {current_player} Wins!", True, self.RED)
         text_rect = text.get_rect(center=(popup_width // 2, popup_height / 2))
 
         # 组合元素
@@ -113,29 +109,31 @@ class Pygomoku:
     def pay(self, x: int, y: int):
         """ 落子, 并返回是否棋局结束了, false: 棋局结束了 """
 
-        if 0 <= x < self.board_size and 0 <= y < self.board_size and self.board[x][y] == "空":
-            self.times += 1
-            self.board[x][y] = f"{self.current_player}{self.times:03d}"
+        if 0 <= x < self.board_size and 0 <= y < self.board_size and self.data["board"][x][y] == "空":
+            self.data["times"] += 1
+            self.data["board"][x][y] = f"{self.data["current_player"]}{self.data["times"]:03d}"
             center = ((x + 1) * self.cell_size, (15 - y) * self.cell_size)
 
             # 绘制棋子
-            if "黑" in self.board[x][y]:
+            if "黑" in self.data["board"][x][y]:
                 pygame.draw.circle(self.screen, self.BLACK, center, self.cell_size // 2 - 2)
-            elif "白" in self.board[x][y]:
+            elif "白" in self.data["board"][x][y]:
                 pygame.draw.circle(self.screen, self.WHITE, center, self.cell_size // 2 - 2)
 
             if self.check_win(x, y):
-                self.winner = self.current_player
+                self.data["winner"] = self.data["current_player"]
                 self.show_win_popup()
 
             # 换对手下
-            self.current_player = "白" if self.current_player == "黑" else "黑"
+            self.data["current_player"] = "白" if self.data["current_player"] == "黑" else "黑"
 
     def reset_game(self):
-        self.board = [["空" for _ in range(self.board_size)] for _ in range(self.board_size)]
-        self.current_player = "黑"
-        self.winner = None
-        self.times = 0
+        self.data = {  # noqa
+            "board": [["空" for _ in range(self.board_size)] for _ in range(self.board_size)],  # 初始化棋盘
+            "current_player": "黑",  # 先手黑
+            "winner": "",  # 重置赢家
+            "times": 0,  # 重置当前下棋第几手
+        }
         self.draw_board()
 
     def main(self):
@@ -161,7 +159,7 @@ class Pygomoku:
                         self.reset_game()
                         continue
 
-                    if not self.winner:
+                    if not self.data["winner"]:
                         self.pay(x, y)
 
             pygame.display.flip()
