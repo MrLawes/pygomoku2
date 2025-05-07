@@ -21,9 +21,9 @@ class Pygomoku:
 
         # 绘制重启按钮
         self.restart_btn = pygame.Rect(
-            (self.board_size - 3) * self.cell_size,  # X坐标
+            (self.board_size - 2) * self.cell_size,  # X坐标
             10,  # Y坐标
-            self.cell_size * 2.5,  # 宽度
+            self.cell_size * 2,  # 宽度
             self.cell_size // 1.5  # 高度
         )
 
@@ -34,11 +34,21 @@ class Pygomoku:
         """ 绘制棋盘 """
 
         pygame.init()
-        self.screen.fill((230, 189, 144))  # 棋盘颜色
+
+        # 棋盘颜色
+        self.screen.fill((230, 189, 144))
+
+        # 画横线竖线
         for i in range(self.board_size):
             pygame.draw.line(self.screen, self.BLACK, ((i + 1) * self.cell_size, self.cell_size), ((i + 1) * self.cell_size, self.board_size * self.cell_size))
             pygame.draw.line(self.screen, self.BLACK, (self.cell_size, (i + 1) * self.cell_size), (self.board_size * self.cell_size, (i + 1) * self.cell_size))
 
+        # 画中元和星位
+        for x, y in [(3, 3), (3, 12), (12, 3), (12, 12), (7, 7), ]:
+            center = ((x + 1) * self.cell_size, (15 - y) * self.cell_size)
+            pygame.draw.circle(self.screen, (139, 69, 19), center, self.cell_size // 2 - 14)
+
+        # 画重置按钮
         pygame.draw.rect(self.screen, (34, 139, 34), self.restart_btn)  # 绿色按钮
         font = pygame.font.SysFont(None, 24)
         text = font.render("Restart", True, self.WHITE)
