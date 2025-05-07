@@ -44,7 +44,7 @@ class Pygomoku:
             pygame.draw.line(self.screen, self.BLACK, (self.cell_size, (i + 1) * self.cell_size), (self.board_size * self.cell_size, (i + 1) * self.cell_size))
 
         # 画中元和星位
-        for x, y in [(3, 3), (3, 12), (12, 3), (12, 12), (7, 7), ]:
+        for x, y in [(3, 3), (3, 11), (11, 3), (11, 11), (7, 7), ]:
             center = ((x + 1) * self.cell_size, (15 - y) * self.cell_size)
             pygame.draw.circle(self.screen, (139, 69, 19), center, self.cell_size // 2 - 14)
 
@@ -116,6 +116,10 @@ class Pygomoku:
         self.screen.blit(popup, (x, 0))
         pygame.display.flip()
 
+    def draw_piece_to_notation(self, x, y, color):
+        """ 画一个棋子到棋谱 """
+        pygame.draw.circle(self.screen, color, ((x + 1) * self.cell_size, (15 - y) * self.cell_size), self.cell_size // 2 - 2)
+
     def pay(self, x: int, y: int):
         """ 落子, 并返回是否棋局结束了, false: 棋局结束了 """
 
@@ -126,9 +130,22 @@ class Pygomoku:
 
             # 绘制棋子
             if "黑" in self.data["board"][x][y]:
-                pygame.draw.circle(self.screen, self.BLACK, center, self.cell_size // 2 - 2)
+                self.draw_piece_to_notation(x, y, self.BLACK)
             elif "白" in self.data["board"][x][y]:
-                pygame.draw.circle(self.screen, self.WHITE, center, self.cell_size // 2 - 2)
+                self.draw_piece_to_notation(x, y, self.WHITE)
+
+            # 当前棋位画上小红点
+            pygame.draw.circle(self.screen, self.RED, center, self.cell_size // 2 - 14)
+
+            # 去掉之前棋子的红点
+            if self.data["times"] > 1:
+                for search_x, row in enumerate(self.data["board"]):
+                    for search_y, record in enumerate(row):
+                        if f"{self.data["times"] - 1:03d}" in record:
+                            if "黑" in record:
+                                self.draw_piece_to_notation(search_x, search_y, self.BLACK)
+                            elif "白" in record:
+                                self.draw_piece_to_notation(search_x, search_y, self.WHITE)
 
             if self.check_win(x, y):
                 self.data["winner"] = self.data["current_player"]
@@ -145,6 +162,11 @@ class Pygomoku:
             "times": 0,  # 重置当前下棋第几手
         }
         self.draw_board()
+
+    def search_notation(self):
+        """ 搜索棋盘 """
+        # todo
+        pass
 
     def main(self):
 
@@ -165,12 +187,16 @@ class Pygomoku:
                     x = round(x_pos / self.cell_size) - 1
                     y = 15 - round(y_pos / self.cell_size)
 
+                    # 点击重置按钮
                     if self.restart_btn.collidepoint(event.pos):
                         self.reset_game()
                         continue
 
                     if not self.data["winner"]:
                         self.pay(x, y)
+                        if self.data["current_player"] == "黑":
+                            print("尝试自动下棋")
+                        # todo 匹配棋盘, 自动下棋
 
             pygame.display.flip()
 
