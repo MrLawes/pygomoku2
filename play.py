@@ -2,6 +2,8 @@ import sys
 
 import pygame
 
+from notation import RECORDS
+
 
 class Pygomoku:
     BLACK = (0, 0, 0)
@@ -45,7 +47,7 @@ class Pygomoku:
 
         # 画中元和星位
         for x, y in [(3, 3), (3, 11), (11, 3), (11, 11), (7, 7), ]:
-            center = ((x + 1) * self.cell_size, (15 - y) * self.cell_size)
+            center = ((x + 1) * self.cell_size, (self.board_size - y) * self.cell_size)
             pygame.draw.circle(self.screen, (139, 69, 19), center, self.cell_size // 2 - 14)
 
         # 画重置按钮
@@ -116,9 +118,9 @@ class Pygomoku:
         self.screen.blit(popup, (x, 0))
         pygame.display.flip()
 
-    def draw_piece_to_notation(self, x, y, color):
+    def draw_piece_to_notation(self, row, col, color):
         """ 画一个棋子到棋谱 """
-        pygame.draw.circle(self.screen, color, ((x + 1) * self.cell_size, (15 - y) * self.cell_size), self.cell_size // 2 - 2)
+        pygame.draw.circle(self.screen, color, ((col + 1) * self.cell_size, (row + 1) * self.cell_size,), self.cell_size // 2 - 2)
 
     def pay(self, x: int, y: int):
         """ 落子, 并返回是否棋局结束了, false: 棋局结束了 """
@@ -126,7 +128,7 @@ class Pygomoku:
         if 0 <= x < self.board_size and 0 <= y < self.board_size and self.data["board"][x][y] == "空":
             self.data["times"] += 1
             self.data["board"][x][y] = f"{self.data["current_player"]}{self.data["times"]:03d}"
-            center = ((x + 1) * self.cell_size, (15 - y) * self.cell_size)
+            center = ((y + 1) * self.cell_size, (x + 1) * self.cell_size,)
 
             # 绘制棋子
             if "黑" in self.data["board"][x][y]:
@@ -165,8 +167,30 @@ class Pygomoku:
 
     def search_notation(self):
         """ 搜索棋盘 """
-        # todo
-        pass
+
+        results = {}
+        next_pay = {}
+        board = []
+        for values in self.data["board"]:
+            for value in values:
+                board.append(value[0])
+
+        for name, record in RECORDS.items():
+            search_board = []
+            for search_y, values in enumerate(record):
+                for search_x, value in enumerate(values):
+                    if f"{self.data["times"] + 1:03d}" in value:
+                        next_pay[name] = [search_y, search_x, ]
+                    search_board.append(value[0])
+
+            count = sum(1 for a, b in zip(board, search_board) if a == b)
+            results[name] = count
+
+        search_name = max(results, key=results.get)
+        if search_name in next_pay:
+            return next_pay[search_name]
+        else:
+            return [0, 0]
 
     def main(self):
 
@@ -184,8 +208,8 @@ class Pygomoku:
                     # 坐标修正
                     x_pos = x_pos - 1  # noqa
                     y_pos = y_pos - 3  # noqa
-                    x = round(x_pos / self.cell_size) - 1
-                    y = 15 - round(y_pos / self.cell_size)
+                    col = round(x_pos / self.cell_size) - 1
+                    row = round(y_pos / self.cell_size) - 1
 
                     # 点击重置按钮
                     if self.restart_btn.collidepoint(event.pos):
@@ -193,10 +217,11 @@ class Pygomoku:
                         continue
 
                     if not self.data["winner"]:
-                        self.pay(x, y)
+                        self.pay(row, col)
                         if self.data["current_player"] == "黑":
-                            print("尝试自动下棋")
-                        # todo 匹配棋盘, 自动下棋
+                            search_x, search_y = self.search_notation()
+                            if search_x and search_y:
+                                self.pay(search_x, search_y)
 
             pygame.display.flip()
 
